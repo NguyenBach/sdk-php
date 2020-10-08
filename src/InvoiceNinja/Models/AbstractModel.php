@@ -23,8 +23,8 @@ class AbstractModel
     }
 
     /**
-    * @return array
-    */
+     * @return array
+     */
     public static function all()
     {
         $url = static::getRoute();
@@ -39,8 +39,8 @@ class AbstractModel
     }
 
     /**
-    * @return \InvoiceNinja\Models\AbstractModel
-    */
+     * @return \InvoiceNinja\Models\AbstractModel
+     */
     public static function find($id)
     {
         $url = static::getRoute() . '/' . $id;
@@ -50,8 +50,8 @@ class AbstractModel
     }
 
     /**
-    * @return \InvoiceNinja\Models\AbstractModel
-    */
+     * @return \InvoiceNinja\Models\AbstractModel
+     */
     public static function findByClientId($id)
     {
         $url = sprintf('%s?client_id=%s', static::getRoute(), $id);
@@ -66,8 +66,8 @@ class AbstractModel
     }
 
     /**
-    * @return \InvoiceNinja\Models\AbstractModel
-    */
+     * @return \InvoiceNinja\Models\AbstractModel
+     */
     public static function findByClientEmail($id)
     {
         $url = sprintf('%s?email=%s', static::getRoute(), $id);
@@ -80,7 +80,7 @@ class AbstractModel
 
         return $result;
     }
-    
+
     /*
     public static function whereClientId($clientId)
     {
@@ -89,8 +89,8 @@ class AbstractModel
     */
 
     /**
-    * @return \InvoiceNinja\Models\AbstractModel
-    */
+     * @return \InvoiceNinja\Models\AbstractModel
+     */
     public function save()
     {
         $url = static::getRoute();
@@ -182,7 +182,7 @@ class AbstractModel
 
     protected static function getRoute()
     {
-        if ( ! static::$route) {
+        if (!static::$route) {
             throw new Exception('API route is not defined for ' . get_called_class());
         }
 
@@ -191,7 +191,7 @@ class AbstractModel
 
     public static function hydrate($item, $entity = false)
     {
-        if ( ! $entity) {
+        if (!$entity) {
             $className = get_called_class();
             $entity = new $className();
         }
@@ -218,6 +218,16 @@ class AbstractModel
 
         $url .= $separator . http_build_query($options);
 
+        $headers = [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($data),
+        ];
+
+        if (Config::isV5()) {
+            array_push($headers, 'X-Api-Token: ' . Config::getToken());
+        } else {
+            array_push($headers, 'X-Ninja-Token: ' . Config::getToken());
+        }
 
         $opts = [
             CURLOPT_URL => $url,
@@ -226,11 +236,7 @@ class AbstractModel
             CURLOPT_POST => $type === 'POST' ? 1 : 0,
             CURLOPT_POSTFIELDS => $data,
             CURLOPT_USERAGENT => 'Invoice Ninja - PHP SDK',
-            CURLOPT_HTTPHEADER  => [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($data),
-                'X-Ninja-Token: '. Config::getToken(),
-            ],
+            CURLOPT_HTTPHEADER => $headers,
         ];
 
         curl_setopt_array($curl, $opts);
